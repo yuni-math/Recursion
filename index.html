@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חדר הבריחה</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e1e2f, #302b63, #24243e);
+    color: white;
+    text-align: center;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #00ffe7;
+}
+
+button {
+    padding: 12px 25px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #ff00cc;
+    color: white;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #ff66e6;
+    transform: scale(1.05);
+}
+
+input {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.door-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.door-wrapper {
+    position: relative;
+}
+
+.door {
+    width: 50px;
+    height: 70px;
+    background: #444;
+    border-radius: 5px;
+    transition: transform 1s ease;
+    transform-origin: left;
+}
+
+.door.open {
+    transform: rotateY(-120deg);
+    background: #00ff88;
+}
+
+.lock {
+    position: absolute;
+    top: 20px;
+    right: 18px;
+    font-size: 18px;
+    color: gold;
+}
+
+.shake {
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+.success-screen {
+    font-size: 26px;
+    color: #00ff88;
+    animation: glow 1s infinite alternate;
+}
+
+@keyframes glow {
+    from { text-shadow: 0 0 10px #00ff88; }
+    to { text-shadow: 0 0 25px #00ff88; }
+}
+
+#riddleText {
+    white-space: pre-line;
+    line-height: 1.6;
+    margin: 20px 0;
+}
+
+/* 🔑 אנימציית מפתח */
+.key {
+    position: fixed;
+    font-size: 40px;
+    z-index: 1000;
+    pointer-events: none;
+    animation: flyKey 1.2s ease-in-out forwards;
+}
+
+@keyframes flyKey {
+    0% {
+        transform: translate(-200px, -200px) rotate(0deg) scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(0, 0) rotate(360deg) scale(1.3);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(0, 0) rotate(720deg) scale(1);
+        opacity: 0;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="startScreen">
+    <h1>🔐 חדר הבריחה 🔐</h1>
+    <p>
+המקום הזה סגור ומסוגר, והדרך היחידה החוצה עוברת דרך חמש דלתות פלדה.
+כדי להיחלץ, תצטרכו לפתור 5 חידות.
+כל תשובה נכונה שתזינו תפתח עבורכם דלת אחת ותקרב אתכם אל החופש.
+
+אם אתם חושבים שאתם מוכנים לחצו על התחל
+    </p>
+    <button onclick="startGame()">התחל</button>
+</div>
+
+<div id="gameScreen" class="hidden">
+
+<div class="door-bar">
+    <div class="door-wrapper"><div class="door" id="door0"></div><div class="lock">🔒</div></div>
+    <div class="door-wrapper"><div class="door" id="door1"></div><div class="lock">🔒</div></div>
+    <div class="door-wrapper"><div class="door" id="door2"></div><div class="lock">🔒</div></div>
+    <div class="door-wrapper"><div class="door" id="door3"></div><div class="lock">🔒</div></div>
+    <div class="door-wrapper"><div class="door" id="door4"></div><div class="lock">🔒</div></div>
+</div>
+
+<h2 id="riddleTitle"></h2>
+<p id="riddleText"></p>
+
+<input type="number" id="answerInput" placeholder="הכנס תשובה">
+<br>
+<button onclick="submitAnswer()">שלח</button>
+
+<p id="message"></p>
+
+</div>
+
+<div id="winScreen" class="hidden success-screen">
+🎉 אליפות! הצלחת להשתחרר מהחדר! 🎉
+<br><br>
+<button onclick="restartGame()">שחק שוב</button>
+</div>
+
+</div>
+
+<script>
+const riddles = [
+{
+title: "חידה 1",
+text: `במקלט לחיות, כל שבוע מאמצים ⅓ מהכלבים (עיגול למעלה),
+ובסוף שבוע אוספים 3 כלבים חדשים.
+אם בשבוע הראשון היו 33 כלבים במקלט,
+כמה יהיו לאחר 3 שבועות?`,
+answer: "15"
+},
+{
+title: "חידה 2",
+text: `במקלט לחיות, כל שבוע מאמצים ⅓ מהכלבים (עיגול למעלה),
+ובסוף שבוע אוספים 3 כלבים חדשים.
+אם בשבוע הראשון היו 33 כלבים במקלט,
+כמה יהיו לאחר השבוע ה-100?`,
+answer: "9"
+},
+{
+title: "חידה 3",
+text: `לעלי הכותרת של פרח הפיבונציון המצויץ יש חוקיות מיוחדת:
+כל יום כמות עלי הכותרת של הפרח גדלה פי 3,
+ובכל ערב נושרים 2 עלי כותרת.
+אם בערב יום ראשון היו על הפרח 2 עלי כותרת,
+כמה עלי כותרת יהיו לאחר 6 ימים ו-6 לילות?`,
+answer: "730"
+},
+{
+title: "חידה 4",
+text: `מוכר בחנות פרחים, בתחילת כל יום מכירות, שומר רבע מהפרחים שברשותו.
+מהחלק הנותר, 2 פרחים הוא שם בחזית החנות (ובסוף היום מחזיר אותם לרשותו) ואת השאר מוכר.
+אם הוא רוצה שבסוף יום חמישי יהיו ברשותו 10 פרחים,
+כמה פרחים הוא צריך לקנות לקראת הפתיחה ביום ראשון?`,
+answer: "7512"
+},
+{
+title: "חידה 5",
+text: `בכפר הדרדסים לאחר כל יום גשם כמות הפטריות גדלה פי 4,
+ובכל ערב חזירי בר רעבים אוכלים 5 פטריות.
+אם לאחר 5 ימים של גשם (ו- 5 לילות) יש 4439 פטריות,
+כמה היו לפני תחילת הגשמים?`,
+answer: "6"
+}
+];
+
+let currentRiddle = 0;
+
+function startGame() {
+    document.getElementById("startScreen").classList.add("hidden");
+    document.getElementById("gameScreen").classList.remove("hidden");
+    loadRiddle();
+}
+
+function loadRiddle() {
+    document.getElementById("riddleTitle").innerText = riddles[currentRiddle].title;
+    document.getElementById("riddleText").innerText = riddles[currentRiddle].text;
+    document.getElementById("message").innerText = "";
+    document.getElementById("answerInput").value = "";
+}
+
+function animateKey(doorIndex) {
+    const door = document.getElementById("door" + doorIndex);
+    const rect = door.getBoundingClientRect();
+
+    const key = document.createElement("div");
+    key.classList.add("key");
+    key.innerHTML = "🗝️";
+    key.style.left = rect.left + "px";
+    key.style.top = rect.top + "px";
+    document.body.appendChild(key);
+
+    setTimeout(() => door.classList.add("open"), 800);
+    setTimeout(() => key.remove(), 1200);
+}
+
+function submitAnswer() {
+    const input = document.getElementById("answerInput");
+    const message = document.getElementById("message");
+
+    if (input.value.trim() === riddles[currentRiddle].answer) {
+
+        animateKey(currentRiddle);
+
+        setTimeout(() => {
+            currentRiddle++;
+            if (currentRiddle === riddles.length) {
+                document.getElementById("gameScreen").classList.add("hidden");
+                document.getElementById("winScreen").classList.remove("hidden");
+            } else {
+                loadRiddle();
+            }
+        }, 1000);
+
+    } else {
+        input.classList.add("shake");
+        setTimeout(() => input.classList.remove("shake"), 300);
+        message.innerText = "❌ נסה שוב";
+    }
+}
+
+function restartGame() {
+    currentRiddle = 0;
+    document.querySelectorAll(".door").forEach(d => d.classList.remove("open"));
+    document.getElementById("winScreen").classList.add("hidden");
+    document.getElementById("startScreen").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
